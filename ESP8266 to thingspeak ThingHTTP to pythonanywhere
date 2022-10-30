@@ -1,0 +1,64 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+
+// WIFI
+#define WIFI_SSID "wifiname"   // your network ssid (name) 
+#define WIFI_PASSWORD "wifipassword"   // your network password
+
+// Thingspeak API Key
+#define THINGSPEAK_API_KEY "Z9AP52MQBR4ZI7RB"
+
+// Thingspeak > Apps > ThingHTTP 
+const char* serverName = "http://api.thingspeak.com/apps/thinghttp/send_request";
+
+void update_to_thingspeak(String id, String irsensorvalue) {
+  WiFiClient client;
+  HTTPClient http;
+
+  // Your Domain name with URL path or IP address with path
+  http.begin(client, serverName);
+  
+  // Specify content-type header
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  // Data to send with HTTP POST
+  String httpRequestData = "api_key=" + String(THINGSPEAK_API_KEY) + "&id=" + id + "&irsensorvalue=" + irsensorvalue;           
+  Serial.println(serverName + httpRequestData);
+  
+  // Send HTTP POST request
+  int httpResponseCode = http.POST(httpRequestData);
+  Serial.print("HTTP Response code: ");
+  Serial.println(httpResponseCode);
+    
+  // Free resources
+  http.end();
+}
+
+void connect_to_wifi(){
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.println("Connecting");
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(100);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to WiFi network with IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void setup() {
+  //ESP32 WEB BROWSER
+  Serial.begin(115200);
+
+  connect_to_wifi();
+}
+
+void loop() {
+
+  if(WiFi.status()== WL_CONNECTED){
+    update_to_thingspeak("ABC123", "15");
+  }
+  else{
+    Serial.println("WiFi Disconnected");  
+    connect_to_wifi();  
+  }
+}
